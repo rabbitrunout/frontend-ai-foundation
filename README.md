@@ -37,3 +37,4 @@ frontend-ai-foundation/
 ├── CLAUDE.md
 ├── LICENSE
 └── README.md
+```
