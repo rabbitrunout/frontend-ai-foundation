@@ -28,3 +28,12 @@ The goal of this repository is to practice AI-assisted frontend development, Git
 ## AI-Assisted Development
 
 Claude Code is used as an AI engineering assistant to review project files, suggest improvements, and support frontend development decisions.
+
+## Repository Structure
+
+```text
+frontend-ai-foundation/
+├── .gitignore
+├── CLAUDE.md
+├── LICENSE
+└── README.md
