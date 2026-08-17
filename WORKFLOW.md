@@ -18,6 +18,12 @@ Accessibility was more intentional in the second version. Inputs use associated 
 
 The biggest improvement was verification. I added Vitest, React Testing Library, user-event, and jsdom. Six automated tests cover required fields, invalid email input, short passwords, mismatched passwords, successful submission, and the valid case where password fields remain empty. I also ran the project linter and production build. All tests passed, lint reported zero warnings and errors, and the Vite production build completed successfully.
 
+## AI Mistake I Caught
+
+One AI-generated mistake I caught was an incomplete test configuration. The first test run failed because Vitest was running without a browser-like DOM environment, causing `userEvent.setup()` to fail. I identified the issue from the test output and configured Vitest to use `jsdom`.
+
+A second issue appeared because rendered components were not being cleaned up between tests. Adding `cleanup()` after each test isolated the test cases and allowed the full suite to pass. This reinforced why AI-generated code should always be executed and verified rather than accepted without review.
+
 ## Review Effort and Lessons Learned
 
 The vague workflow was faster initially, but required more trust in the generated result and provided less evidence of correctness. The precise workflow required more setup and review, including fixing the test environment and test cleanup, but produced a result that was easier to verify and maintain.
