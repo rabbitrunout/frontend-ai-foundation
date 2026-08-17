@@ -46,3 +46,11 @@ When working in this repository:
 - Preserve the current project structure.
 - Follow frontend engineering best practices.
 - Apply changes only when they improve clarity, maintainability, or accessibility.
+
+## Project Rules Learned from AI Workflow Exercise
+
+- Define validation rules and edge cases before implementing form behavior.
+- For interactive form controls, include semantic labels, accessible error messaging, and visible keyboard focus states.
+- Add automated tests for both successful behavior and failure cases when implementing user-facing validation.
+- Run tests, lint, and the production build before considering a feature complete.
+- Inspect the existing project structure and dependencies before introducing new files or libraries.
