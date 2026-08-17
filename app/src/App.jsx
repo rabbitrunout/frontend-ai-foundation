@@ -1,121 +1,224 @@
 import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
 import './App.css'
 
+const initialValues = {
+  name: '',
+  email: '',
+  password: '',
+  confirmPassword: '',
+  notifications: true,
+}
+
+function validateForm(values) {
+  const errors = {}
+
+  if (!values.name.trim()) {
+    errors.name = 'Name is required.'
+  } else if (values.name.trim().length < 2) {
+    errors.name = 'Name must be at least 2 characters.'
+  }
+
+  if (!values.email.trim()) {
+    errors.email = 'Email is required.'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email.trim())) {
+    errors.email = 'Enter a valid email address.'
+  }
+
+  if (values.password && values.password.length < 8) {
+    errors.password = 'Password must be at least 8 characters.'
+  }
+
+  if (values.password && !values.confirmPassword) {
+    errors.confirmPassword = 'Please confirm your password.'
+  } else if (values.password !== values.confirmPassword) {
+    errors.confirmPassword = 'Passwords do not match.'
+  }
+
+  return errors
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [formData, setFormData] = useState(initialValues)
+  const [errors, setErrors] = useState({})
+  const [successMessage, setSuccessMessage] = useState('')
+
+  const handleChange = (event) => {
+    const { name, value, type, checked } = event.target
+
+    const nextValue = type === 'checkbox' ? checked : value
+
+    setFormData((current) => ({
+      ...current,
+      [name]: nextValue,
+    }))
+
+    if (errors[name]) {
+      setErrors((current) => ({
+        ...current,
+        [name]: '',
+      }))
+    }
+
+    setSuccessMessage('')
+  }
+
+  const handleSubmit = (event) => {
+    event.preventDefault()
+
+    const validationErrors = validateForm(formData)
+
+    if (Object.keys(validationErrors).length > 0) {
+      setErrors(validationErrors)
+      setSuccessMessage('')
+      return
+    }
+
+    setErrors({})
+    setSuccessMessage('Settings saved successfully.')
+  }
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
+    <main className="settings-page">
+      <section className="settings-card" aria-labelledby="settings-title">
+        <div className="settings-header">
+          <span className="eyebrow">Account</span>
+          <h1 id="settings-title">Settings</h1>
           <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
+            Update your profile information, password, and notification
+            preferences.
           </p>
         </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
+
+        <form onSubmit={handleSubmit} noValidate>
+          <div className="form-group">
+            <label htmlFor="name">
+              Name <span aria-hidden="true">*</span>
+            </label>
+
+            <input
+              id="name"
+              name="name"
+              type="text"
+              value={formData.name}
+              onChange={handleChange}
+              aria-invalid={Boolean(errors.name)}
+              aria-describedby={errors.name ? 'name-error' : undefined}
+              autoComplete="name"
+            />
+
+            {errors.name && (
+              <p id="name-error" className="error-message" role="alert">
+                {errors.name}
+              </p>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="email">
+              Email <span aria-hidden="true">*</span>
+            </label>
+
+            <input
+              id="email"
+              name="email"
+              type="email"
+              value={formData.email}
+              onChange={handleChange}
+              aria-invalid={Boolean(errors.email)}
+              aria-describedby={errors.email ? 'email-error' : undefined}
+              autoComplete="email"
+            />
+
+            {errors.email && (
+              <p id="email-error" className="error-message" role="alert">
+                {errors.email}
+              </p>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="password">New password</label>
+
+            <input
+              id="password"
+              name="password"
+              type="password"
+              value={formData.password}
+              onChange={handleChange}
+              aria-invalid={Boolean(errors.password)}
+              aria-describedby={
+                errors.password ? 'password-error' : 'password-hint'
+              }
+              autoComplete="new-password"
+            />
+
+            {errors.password ? (
+              <p id="password-error" className="error-message" role="alert">
+                {errors.password}
+              </p>
+            ) : (
+              <p id="password-hint" className="field-hint">
+                Leave blank to keep your current password.
+              </p>
+            )}
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="confirmPassword">Confirm password</label>
+
+            <input
+              id="confirmPassword"
+              name="confirmPassword"
+              type="password"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              aria-invalid={Boolean(errors.confirmPassword)}
+              aria-describedby={
+                errors.confirmPassword
+                  ? 'confirm-password-error'
+                  : undefined
+              }
+              autoComplete="new-password"
+            />
+
+            {errors.confirmPassword && (
+              <p
+                id="confirm-password-error"
+                className="error-message"
+                role="alert"
+              >
+                {errors.confirmPassword}
+              </p>
+            )}
+          </div>
+
+          <div className="notification-setting">
+            <div>
+              <label htmlFor="notifications">Email notifications</label>
+              <p>Receive product updates and important account messages.</p>
+            </div>
+
+            <input
+              id="notifications"
+              name="notifications"
+              type="checkbox"
+              checked={formData.notifications}
+              onChange={handleChange}
+            />
+          </div>
+
+          {successMessage && (
+            <p className="success-message" role="status" aria-live="polite">
+              {successMessage}
+            </p>
+          )}
+
+          <button className="save-button" type="submit">
+            Save settings
+          </button>
+        </form>
       </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    </main>
   )
 }
 
