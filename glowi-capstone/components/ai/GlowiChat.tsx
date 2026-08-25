@@ -1,11 +1,44 @@
 "use client";
 
 import { useChat } from "@ai-sdk/react";
+import type { ToolUIPart } from "ai";
 import { useEffect, useRef, useState } from "react";
+
+import CompetitionToolCard from "./CompetitionToolCard";
+
+type CompetitionStatus =
+  | "Upcoming"
+  | "Registered"
+  | "Completed";
+
+type CompetitionToolInput = {
+  athlete?: string;
+  status?: CompetitionStatus;
+};
+
+type CompetitionToolOutput = {
+  count: number;
+  competitions: {
+    id: string;
+    name: string;
+    date: string;
+    location: string;
+    athlete: string;
+    status: CompetitionStatus;
+  }[];
+};
+
+type CompetitionToolPart = ToolUIPart<{
+  getCompetitions: {
+    input: CompetitionToolInput;
+    output: CompetitionToolOutput;
+  };
+}>;
 
 export default function GlowiChat() {
   const [input, setInput] = useState("");
-  const [isPinnedToBottom, setIsPinnedToBottom] = useState(true);
+  const [isPinnedToBottom, setIsPinnedToBottom] =
+    useState(true);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -105,15 +138,65 @@ export default function GlowiChat() {
 
                 <div className="whitespace-pre-wrap text-sm leading-6">
                   {message.parts.map((part, index) => {
-                    if (part.type !== "text") {
-                      return null;
+                    if (part.type === "text") {
+                      return (
+                        <span
+                          key={`${message.id}-${index}`}
+                        >
+                          {part.text}
+                        </span>
+                      );
                     }
 
-                    return (
-                      <span key={`${message.id}-${index}`}>
-                        {part.text}
-                      </span>
-                    );
+                    if (
+                      part.type ===
+                      "tool-getCompetitions"
+                    ) {
+                      const toolPart =
+                        part as CompetitionToolPart;
+
+                      if (
+                        toolPart.state ===
+                          "approval-requested" ||
+                        toolPart.state ===
+                          "approval-responded" ||
+                        toolPart.state ===
+                          "output-denied"
+                      ) {
+                        return null;
+                      }
+
+                      return (
+                        <CompetitionToolCard
+                          key={`${message.id}-${index}`}
+                          state={toolPart.state}
+                          input={
+                            toolPart.state ===
+                              "input-available" ||
+                            toolPart.state ===
+                              "output-available" ||
+                            toolPart.state ===
+                              "output-error"
+                              ? toolPart.input
+                              : undefined
+                          }
+                          output={
+                            toolPart.state ===
+                            "output-available"
+                              ? toolPart.output
+                              : undefined
+                          }
+                          errorText={
+                            toolPart.state ===
+                            "output-error"
+                              ? toolPart.errorText
+                              : undefined
+                          }
+                        />
+                      );
+                    }
+
+                    return null;
                   })}
                 </div>
               </div>
@@ -131,26 +214,28 @@ export default function GlowiChat() {
           )}
         </div>
 
-        {!isPinnedToBottom && messages.length > 0 && (
-          <button
-            type="button"
-            onClick={() => {
-              const container = scrollRef.current;
+        {!isPinnedToBottom &&
+          messages.length > 0 && (
+            <button
+              type="button"
+              onClick={() => {
+                const container =
+                  scrollRef.current;
 
-              if (container) {
-                container.scrollTo({
-                  top: container.scrollHeight,
-                  behavior: "smooth",
-                });
-              }
+                if (container) {
+                  container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: "smooth",
+                  });
+                }
 
-              setIsPinnedToBottom(true);
-            }}
-            className="sticky bottom-3 left-1/2 mt-4 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow"
-          >
-            Jump to latest
-          </button>
-        )}
+                setIsPinnedToBottom(true);
+              }}
+              className="sticky bottom-3 left-1/2 mt-4 -translate-x-1/2 rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 shadow"
+            >
+              Jump to latest
+            </button>
+          )}
       </div>
 
       {error && (
