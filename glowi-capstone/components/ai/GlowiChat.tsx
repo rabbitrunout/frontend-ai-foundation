@@ -50,13 +50,13 @@ export default function GlowiChat() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
-    messages,
-    sendMessage,
-    status,
-    stop,
-    error,
-    regenerate,
-  } = useChat();
+  messages,
+  sendMessage,
+  regenerate,
+  status,
+  stop,
+  error,
+} = useChat();
 
   const isStreaming =
     status === "submitted" || status === "streaming";
