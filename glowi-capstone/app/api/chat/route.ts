@@ -2,6 +2,7 @@ import {
   convertToModelMessages,
   createUIMessageStream,
   createUIMessageStreamResponse,
+  stepCountIs,
   streamText,
   type UIMessage,
 } from "ai";
@@ -12,6 +13,7 @@ import {
 } from "@/lib/ai/config";
 
 import { getCompetitions } from "@/lib/ai/tools/getCompetitions";
+import { getPayments } from "@/lib/ai/tools/getPayments";
 
 export const maxDuration = 30;
 
@@ -128,10 +130,14 @@ export async function POST(req: Request) {
     model: glowiModel,
     system: GLOWI_SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
+    
 
     tools: {
       getCompetitions,
+      getPayments,
     },
+
+    stopWhen: stepCountIs(5),
 
     abortSignal: req.signal,
   });

@@ -1,0 +1,32 @@
+[
+  {
+    "id": "1",
+    "name": "Ontario Rhythmic Challenge",
+    "date": "2026-09-12",
+    "location": "Toronto, ON",
+    "athlete": "Kira",
+    "status": "Upcoming",
+    "registrationDeadline": "2026-09-01",
+    "actionRequired": true
+  },
+  {
+    "id": "2",
+    "name": "Maple Cup",
+    "date": "2026-10-03",
+    "location": "Markham, ON",
+    "athlete": "Kira",
+    "status": "Registered",
+    "registrationDeadline": "2026-09-15",
+    "actionRequired": false
+  },
+  {
+    "id": "3",
+    "name": "Spring Invitational",
+    "date": "2026-05-18",
+    "location": "Mississauga, ON",
+    "athlete": "Kira",
+    "status": "Completed",
+    "registrationDeadline": "2026-05-01",
+    "actionRequired": false
+  }
+]

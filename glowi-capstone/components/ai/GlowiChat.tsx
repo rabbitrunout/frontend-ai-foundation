@@ -5,6 +5,7 @@ import type { ToolUIPart } from "ai";
 import { useEffect, useRef, useState } from "react";
 
 import CompetitionToolCard from "./CompetitionToolCard";
+import PaymentToolCard from "./PaymentToolCard";
 
 type CompetitionStatus =
   | "Upcoming"
@@ -32,6 +33,43 @@ type CompetitionToolPart = ToolUIPart<{
   getCompetitions: {
     input: CompetitionToolInput;
     output: CompetitionToolOutput;
+  };
+}>;
+
+type PaymentPriority =
+  | "URGENT"
+  | "SOON"
+  | "FYI";
+
+type PaymentStatus =
+  | "Pending"
+  | "Paid"
+  | "Overdue";
+
+type PaymentToolInput = {
+  athlete?: string;
+  status?: PaymentStatus;
+};
+
+type PaymentToolOutput = {
+  count: number;
+  payments: {
+    id: string;
+    athlete: string;
+    title: string;
+    amount: number;
+    currency: string;
+    dueDate: string;
+    status: PaymentStatus;
+    daysUntilDue: number;
+    priority: PaymentPriority;
+  }[];
+};
+
+type PaymentToolPart = ToolUIPart<{
+  getPayments: {
+    input: PaymentToolInput;
+    output: PaymentToolOutput;
   };
 }>;
 
@@ -239,6 +277,42 @@ export default function GlowiChat() {
                         />
                       );
                     }
+
+                    if (part.type === "tool-getPayments") {
+  const toolPart = part as PaymentToolPart;
+
+  if (
+    toolPart.state === "approval-requested" ||
+    toolPart.state === "approval-responded" ||
+    toolPart.state === "output-denied"
+  ) {
+    return null;
+  }
+
+  return (
+    <PaymentToolCard
+      key={`${message.id}-${index}`}
+      state={toolPart.state}
+      input={
+        toolPart.state === "input-available" ||
+        toolPart.state === "output-available" ||
+        toolPart.state === "output-error"
+          ? toolPart.input
+          : undefined
+      }
+      output={
+        toolPart.state === "output-available"
+          ? toolPart.output
+          : undefined
+      }
+      errorText={
+        toolPart.state === "output-error"
+          ? toolPart.errorText
+          : undefined
+      }
+    />
+  );
+}
 
                     return null;
                   })}
