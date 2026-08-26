@@ -139,10 +139,16 @@ export default function CompetitionToolCard({
           ))}
         </div>
       ) : (
-        <p className="mt-3 text-sm text-emerald-800">
-          No competitions matched this search.
-        </p>
-      )}
+  <div className="mt-3 rounded-lg border border-slate-200 bg-white p-4">
+    <p className="text-sm font-semibold text-slate-900">
+      No competitions found
+    </p>
+
+    <p className="mt-1 text-sm text-slate-600">
+      Try another athlete name or remove the status filter.
+    </p>
+  </div>
+)}
     </div>
   );
 }

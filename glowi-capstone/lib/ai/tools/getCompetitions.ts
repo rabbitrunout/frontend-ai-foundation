@@ -1,73 +1,145 @@
+import { readFile } from "node:fs/promises";
+import path from "node:path";
+
 import { tool } from "ai";
 import { z } from "zod";
 
-const competitions = [
-  {
-    id: "1",
-    name: "Ontario Rhythmic Challenge",
-    date: "2026-09-12",
-    location: "Toronto, ON",
-    athlete: "Kira",
-    status: "Upcoming" as const,
-  },
-  {
-    id: "2",
-    name: "Maple Cup",
-    date: "2026-10-03",
-    location: "Markham, ON",
-    athlete: "Kira",
-    status: "Registered" as const,
-  },
-  {
-    id: "3",
-    name: "Spring Invitational",
-    date: "2026-05-18",
-    location: "Mississauga, ON",
-    athlete: "Kira",
-    status: "Completed" as const,
-  },
-];
+const competitionSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  date: z.string(),
+  location: z.string(),
+  athlete: z.string(),
+  status: z.enum([
+    "Upcoming",
+    "Registered",
+    "Completed",
+  ]),
+  registrationDeadline: z.string(),
+  actionRequired: z.boolean(),
+});
+
+const competitionsSchema = z.array(competitionSchema);
+
+async function loadCompetitions() {
+  const filePath = path.join(
+    process.cwd(),
+    "data",
+    "glowi",
+    "competitions.json"
+  );
+
+  const file = await readFile(filePath, "utf8");
+  const parsed = JSON.parse(file);
+
+  return competitionsSchema.parse(parsed);
+}
+
+function getDaysUntilDeadline(deadline: string) {
+  const today = new Date();
+
+  const todayUtc = Date.UTC(
+    today.getUTCFullYear(),
+    today.getUTCMonth(),
+    today.getUTCDate()
+  );
+
+  const due = new Date(`${deadline}T00:00:00Z`);
+
+  return Math.round(
+    (due.getTime() - todayUtc) /
+      (1000 * 60 * 60 * 24)
+  );
+}
+
+function getCompetitionPriority(
+  daysUntilDeadline: number,
+  actionRequired: boolean
+) {
+  if (!actionRequired) {
+    return "FYI" as const;
+  }
+
+  if (daysUntilDeadline < 0) {
+    return "URGENT" as const;
+  }
+
+  if (daysUntilDeadline <= 2) {
+    return "URGENT" as const;
+  }
+
+  if (
+    daysUntilDeadline >= 3 &&
+    daysUntilDeadline <= 7
+  ) {
+    return "SOON" as const;
+  }
+
+  return "FYI" as const;
+}
 
 export const getCompetitions = tool({
   description:
-    "Find rhythmic gymnastics competitions by athlete and/or competition status.",
+    "Read Glowi competition records and find rhythmic gymnastics competitions by athlete and/or status. The tool calculates daysUntilRegistrationDeadline and priority. Treat the returned priority as authoritative.",
 
   inputSchema: z.object({
     athlete: z
       .string()
       .optional()
-      .describe("Athlete name to filter competitions by"),
+      .describe(
+        "Athlete name to filter competitions by"
+      ),
 
     status: z
-      .enum(["Upcoming", "Registered", "Completed"])
+      .enum([
+        "Upcoming",
+        "Registered",
+        "Completed",
+      ])
       .optional()
-      .describe("Competition status to filter by"),
+      .describe(
+        "Competition status to filter by"
+      ),
   }),
 
   execute: async ({ athlete, status }) => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+    const competitions = await loadCompetitions();
 
-    // Special test input so we can demonstrate the designed error state.
-    if (athlete?.toLowerCase() === "error") {
-      throw new Error("Competition data could not be loaded.");
-    }
+    const filtered = competitions.filter(
+      (competition) => {
+        const athleteMatches =
+          !athlete ||
+          competition.athlete
+            .toLowerCase()
+            .includes(athlete.toLowerCase());
 
-    const filtered = competitions.filter((competition) => {
-      const athleteMatches =
-        !athlete ||
-        competition.athlete
-          .toLowerCase()
-          .includes(athlete.toLowerCase());
+        const statusMatches =
+          !status ||
+          competition.status === status;
 
-      const statusMatches =
-        !status || competition.status === status;
+        return athleteMatches && statusMatches;
+      }
+    );
 
-      return athleteMatches && statusMatches;
+    const results = filtered.map((competition) => {
+      const daysUntilRegistrationDeadline =
+        getDaysUntilDeadline(
+          competition.registrationDeadline
+        );
+
+      return {
+        ...competition,
+        daysUntilRegistrationDeadline,
+        priority: getCompetitionPriority(
+          daysUntilRegistrationDeadline,
+          competition.actionRequired
+        ),
+      };
     });
 
     return {
-      count: filtered.length,
-      competitions: filtered,
+      count: results.length,
+      competitions: results,
     };
   },
 });

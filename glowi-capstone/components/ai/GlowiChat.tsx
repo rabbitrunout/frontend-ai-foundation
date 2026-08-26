@@ -5,6 +5,7 @@ import type { ToolUIPart } from "ai";
 import { useEffect, useRef, useState } from "react";
 
 import CompetitionToolCard from "./CompetitionToolCard";
+import PaymentToolCard from "./PaymentToolCard";
 
 type CompetitionStatus =
   | "Upcoming"
@@ -35,20 +36,65 @@ type CompetitionToolPart = ToolUIPart<{
   };
 }>;
 
+type PaymentPriority =
+  | "URGENT"
+  | "SOON"
+  | "FYI";
+
+type PaymentStatus =
+  | "Pending"
+  | "Paid"
+  | "Overdue";
+
+type PaymentToolInput = {
+  athlete?: string;
+  status?: PaymentStatus;
+};
+
+type PaymentToolOutput = {
+  count: number;
+  payments: {
+    id: string;
+    athlete: string;
+    title: string;
+    amount: number;
+    currency: string;
+    dueDate: string;
+    status: PaymentStatus;
+    daysUntilDue: number;
+    priority: PaymentPriority;
+  }[];
+};
+
+type PaymentToolPart = ToolUIPart<{
+  getPayments: {
+    input: PaymentToolInput;
+    output: PaymentToolOutput;
+  };
+}>;
+
+const examplePrompts = [
+  "Show me Kira's upcoming competitions.",
+  "What competitions are registered?",
+  "Help me prepare for the next competition.",
+];
+
 export default function GlowiChat() {
   const [input, setInput] = useState("");
   const [isPinnedToBottom, setIsPinnedToBottom] =
     useState(true);
+  const [isRetrying, setIsRetrying] = useState(false);
 
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const {
-    messages,
-    sendMessage,
-    status,
-    stop,
-    error,
-  } = useChat();
+  messages,
+  sendMessage,
+  regenerate,
+  status,
+  stop,
+  error,
+} = useChat();
 
   const isStreaming =
     status === "submitted" || status === "streaming";
@@ -76,12 +122,8 @@ export default function GlowiChat() {
     setIsPinnedToBottom(distanceFromBottom < 80);
   };
 
-  const handleSubmit = async (
-    event: React.FormEvent<HTMLFormElement>
-  ) => {
-    event.preventDefault();
-
-    const trimmedInput = input.trim();
+  const submitText = async (text: string) => {
+    const trimmedInput = text.trim();
 
     if (!trimmedInput || isStreaming) return;
 
@@ -93,6 +135,26 @@ export default function GlowiChat() {
     });
   };
 
+  const handleSubmit = async (
+    event: React.FormEvent<HTMLFormElement>
+  ) => {
+    event.preventDefault();
+    await submitText(input);
+  };
+
+  const handleRetry = async () => {
+    if (isRetrying || isStreaming) return;
+
+    setIsRetrying(true);
+    setIsPinnedToBottom(true);
+
+    try {
+      await regenerate();
+    } finally {
+      setIsRetrying(false);
+    }
+  };
+
   return (
     <div className="flex min-h-[70vh] flex-col overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div
@@ -101,15 +163,35 @@ export default function GlowiChat() {
         className="relative flex-1 overflow-y-auto p-4 sm:p-6"
       >
         {messages.length === 0 && (
-          <div className="mx-auto max-w-xl py-16 text-center">
-            <h2 className="text-xl font-semibold text-slate-900">
+          <div className="mx-auto max-w-xl py-10 text-center sm:py-16">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-teal-50 text-xl">
+              ✨
+            </div>
+
+            <h2 className="mt-4 text-xl font-semibold text-slate-900">
               How can Glowi help?
             </h2>
 
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm leading-6 text-slate-600">
               Ask about schedules, competitions, payments,
               athlete progress, or coach requests.
             </p>
+
+            <div className="mt-6 grid gap-2 sm:grid-cols-1">
+              {examplePrompts.map((prompt) => (
+                <button
+                  key={prompt}
+                  type="button"
+                  onClick={() => {
+                    void submitText(prompt);
+                  }}
+                  disabled={isStreaming}
+                  className="rounded-xl border border-slate-200 bg-white px-4 py-3 text-left text-sm text-slate-700 transition hover:border-teal-300 hover:bg-teal-50 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {prompt}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 
@@ -126,8 +208,8 @@ export default function GlowiChat() {
               <div
                 className={
                   message.role === "user"
-                    ? "max-w-[85%] rounded-2xl rounded-br-md bg-teal-700 px-4 py-3 text-white"
-                    : "max-w-[85%] rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3 text-slate-900"
+                    ? "max-w-[90%] rounded-2xl rounded-br-md bg-teal-700 px-4 py-3 text-white sm:max-w-[85%]"
+                    : "max-w-[90%] rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3 text-slate-900 sm:max-w-[85%]"
                 }
               >
                 <p className="mb-1 text-xs font-semibold opacity-70">
@@ -196,6 +278,42 @@ export default function GlowiChat() {
                       );
                     }
 
+                    if (part.type === "tool-getPayments") {
+  const toolPart = part as PaymentToolPart;
+
+  if (
+    toolPart.state === "approval-requested" ||
+    toolPart.state === "approval-responded" ||
+    toolPart.state === "output-denied"
+  ) {
+    return null;
+  }
+
+  return (
+    <PaymentToolCard
+      key={`${message.id}-${index}`}
+      state={toolPart.state}
+      input={
+        toolPart.state === "input-available" ||
+        toolPart.state === "output-available" ||
+        toolPart.state === "output-error"
+          ? toolPart.input
+          : undefined
+      }
+      output={
+        toolPart.state === "output-available"
+          ? toolPart.output
+          : undefined
+      }
+      errorText={
+        toolPart.state === "output-error"
+          ? toolPart.errorText
+          : undefined
+      }
+    />
+  );
+}
+
                     return null;
                   })}
                 </div>
@@ -205,10 +323,16 @@ export default function GlowiChat() {
 
           {status === "submitted" && (
             <div className="flex justify-start">
-              <div className="rounded-2xl rounded-bl-md bg-slate-100 px-4 py-3 text-sm text-slate-500">
-                <span className="animate-pulse">
-                  Glowi is thinking...
-                </span>
+              <div className="w-full max-w-[90%] rounded-2xl rounded-bl-md bg-slate-100 p-4 sm:max-w-[85%]">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-3 w-20 rounded bg-slate-300" />
+                  <div className="h-3 w-full rounded bg-slate-200" />
+                  <div className="h-3 w-4/5 rounded bg-slate-200" />
+                </div>
+
+                <p className="mt-3 text-xs text-slate-500">
+                  Glowi is preparing a response...
+                </p>
               </div>
             </div>
           )}
@@ -241,9 +365,33 @@ export default function GlowiChat() {
       {error && (
         <div
           role="alert"
-          className="border-t border-red-100 bg-red-50 px-4 py-2 text-sm text-red-700"
+          className="border-t border-red-200 bg-red-50 px-4 py-4"
         >
-          Something went wrong. Please try again.
+          <div className="mx-auto flex max-w-3xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-semibold text-red-900">
+                Glowi couldn&apos;t finish that response.
+              </p>
+
+              <p className="mt-1 text-sm text-red-700">
+                Your conversation is still here. You can
+                retry the failed response.
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                void handleRetry();
+              }}
+              disabled={isRetrying || isStreaming}
+              className="min-h-10 rounded-lg border border-red-300 bg-white px-4 py-2 text-sm font-semibold text-red-800 transition hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isRetrying
+                ? "Retrying..."
+                : "Retry last response"}
+            </button>
+          </div>
         </div>
       )}
 
@@ -276,7 +424,7 @@ export default function GlowiChat() {
             }}
             placeholder="Ask Glowi..."
             rows={1}
-            disabled={isStreaming}
+            disabled={isStreaming || isRetrying}
             className="max-h-32 min-h-11 flex-1 resize-none rounded-xl border border-slate-300 px-3 py-2 text-base outline-none focus:border-teal-700 focus:ring-2 focus:ring-teal-100 disabled:bg-slate-100"
           />
 
@@ -291,7 +439,7 @@ export default function GlowiChat() {
           ) : (
             <button
               type="submit"
-              disabled={!input.trim()}
+              disabled={!input.trim() || isRetrying}
               className="min-h-11 rounded-xl bg-teal-700 px-4 py-2 font-medium text-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Send
