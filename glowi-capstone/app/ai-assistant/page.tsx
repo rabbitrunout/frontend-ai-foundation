@@ -1,3 +1,4 @@
+import ButtonMotionDemo from "@/components/ai/ButtonMotionDemo";
 import GlowiChat from "@/components/ai/GlowiChat";
 
 export default function AIAssistantPage() {
@@ -18,6 +19,8 @@ export default function AIAssistantPage() {
         </p>
 
         <GlowiChat />
+
+        <ButtonMotionDemo />
       </div>
     </main>
   );

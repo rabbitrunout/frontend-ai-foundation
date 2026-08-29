@@ -24,3 +24,406 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+
+/* ========================================
+   FE-AA1 — Smart Send Button
+   Motion & State Micro-interactions
+======================================== */
+
+.smart-send-button {
+  min-height: 44px;
+  min-width: 94px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  border: 0;
+  border-radius: 12px;
+  padding: 10px 16px;
+
+  background: #0f766e;
+  color: white;
+
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transform: translateY(0) scale(1);
+  opacity: 1;
+
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 180ms ease,
+    background-color 220ms ease,
+    box-shadow 220ms ease;
+}
+
+/* Hover */
+
+.smart-send-button:not(:disabled):hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(15, 118, 110, 0.2);
+}
+
+/* Active / pressed */
+
+.smart-send-button:not(:disabled):active {
+  transform: translateY(0) scale(0.96);
+}
+
+/* Keyboard focus */
+
+.smart-send-button:focus-visible {
+  outline: 3px solid rgba(20, 184, 166, 0.35);
+  outline-offset: 3px;
+}
+
+/* Disabled */
+
+.smart-send-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* Arrow */
+
+.smart-send-arrow {
+  display: inline-block;
+
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity 180ms ease;
+}
+
+.smart-send-button:not(:disabled):hover
+  .smart-send-arrow {
+  transform: translateX(3px);
+}
+
+/* Loading */
+
+.smart-send-button--loading {
+  background: #0f172a;
+}
+
+.smart-send-spinner {
+  width: 15px;
+  height: 15px;
+
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: white;
+  border-radius: 999px;
+
+  animation: smart-send-spin 700ms linear infinite;
+}
+
+@keyframes smart-send-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Success */
+
+.smart-send-button--success {
+  background: #15803d;
+  opacity: 1;
+}
+
+.smart-send-check {
+  display: inline-block;
+
+  animation: smart-send-check-in 280ms
+    cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes smart-send-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.5) rotate(-12deg);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(0);
+  }
+}
+
+/* Error */
+
+.smart-send-button--error {
+  background: #b91c1c;
+
+  animation: smart-send-error-shake 320ms ease-out;
+}
+
+.smart-send-error-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 18px;
+  height: 18px;
+
+  border: 2px solid currentColor;
+  border-radius: 999px;
+
+  font-size: 12px;
+  font-weight: 800;
+}
+
+@keyframes smart-send-error-shake {
+  0% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-4px);
+  }
+
+  50% {
+    transform: translateX(4px);
+  }
+
+  75% {
+    transform: translateX(-2px);
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* Reduced motion */
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-send-button,
+  .smart-send-arrow,
+  .smart-send-check {
+    transition-duration: 0.01ms;
+    animation-duration: 0.01ms;
+    animation-iteration-count: 1;
+  }
+
+  .smart-send-spinner {
+    animation-duration: 1.5s;
+  }
+
+  .smart-send-button--error {
+    animation: none;
+  }
+}
+
+
+/* ========================================
+   FE-AA1 — Demo panel
+======================================== */
+
+.motion-demo {
+  margin-top: 32px;
+  padding: 24px;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.motion-demo-eyebrow {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: #0f766e;
+}
+
+.motion-demo-title {
+  margin-top: 6px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.motion-demo-description {
+  margin-top: 6px;
+  max-width: 560px;
+  font-size: 0.9rem;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+.motion-demo-preview {
+  display: flex;
+  align-items: center;
+  min-height: 90px;
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #f8fafc;
+}
+
+.motion-demo-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.motion-demo-control {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #ffffff;
+  color: #334155;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition:
+    transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    background-color 180ms ease,
+    border-color 180ms ease,
+    opacity 180ms ease;
+}
+
+.motion-demo-control:not(:disabled):hover {
+  transform: translateY(-1px);
+  border-color: #0f766e;
+  background: #f0fdfa;
+}
+
+.motion-demo-control:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+.motion-demo-control:focus-visible {
+  outline: 3px solid rgba(20, 184, 166, 0.3);
+  outline-offset: 3px;
+}
+
+.motion-demo-control:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.motion-demo-notes {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.motion-demo-notes h3 {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.motion-demo-notes p {
+  margin-top: 7px;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: #64748b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .motion-demo-control {
+    transition-duration: 0.01ms;
+  }
+}
+
+/* BUTTON MOTION DEMO */
+
+.button-demo {
+  margin: 88px 0;
+  padding: 48px;
+  border: 1px solid var(--border);
+  border-radius: 28px;
+  background: var(--surface);
+  text-align: center;
+}
+
+.button-demo h2 {
+  margin: 14px 0 26px;
+  font-size: clamp(2rem, 4vw, 3.4rem);
+  letter-spacing: -0.05em;
+}
+
+.smart-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 210px;
+  height: 56px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform .18s ease, background .25s ease;
+}
+
+.smart-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.smart-btn.loading {
+  background: #1f7668;
+}
+
+.smart-btn.success {
+  background: #18a76f;
+}
+
+.smart-btn.error {
+  background: #d95454;
+  animation: shake .35s ease;
+}
+
+.btn-icon {
+  width: 22px;
+  display: flex;
+  justify-content: center;
+}
+
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.35);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin .8s linear infinite;
+}
+
+.motion-note {
+  margin-top: 22px;
+  color: var(--muted);
+  font-size: .92rem;
+  line-height: 1.6;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes shake {
+  20% { transform: translateX(-3px); }
+  40% { transform: translateX(3px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .smart-btn,
+  .spinner {
+    animation: none !important;
+    transition: none !important;
+  }
+}
