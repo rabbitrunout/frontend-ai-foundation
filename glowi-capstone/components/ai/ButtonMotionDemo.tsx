@@ -1,61 +1,162 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-type State = "idle" | "loading" | "success" | "error";
+type DemoState = "idle" | "loading" | "success" | "error";
 
 export default function ButtonMotionDemo() {
-  const [state, setState] = useState<State>("idle");
+  const [state, setState] = useState<DemoState>("idle");
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleClick = async () => {
-    if (state === "loading") return;
-
-    setState("loading");
-
-    await new Promise((r) => setTimeout(r, 1400));
-
-    const ok = Math.random() > 0.2;
-
-    if (ok) {
-      setState("success");
-      setTimeout(() => setState("idle"), 1800);
-    } else {
-      setState("error");
-      setTimeout(() => setState("idle"), 2200);
+  const clearTimer = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
   };
 
-  const label = {
-    idle: "Send message",
-    loading: "Sending...",
-    success: "Sent!",
-    error: "Try again",
-  }[state];
+  const runDemo = (result: "success" | "error") => {
+    if (state === "loading") return;
+
+    clearTimer();
+    setState("loading");
+
+    timerRef.current = setTimeout(() => {
+      setState(result);
+
+      timerRef.current = setTimeout(() => {
+        setState("idle");
+      }, 1600);
+    }, 900);
+  };
+
+  const isLoading = state === "loading";
 
   return (
-    <section className="button-demo">
-      <p className="eyebrow">Week 6 · Motion Demo</p>
-      <h2>Buttons with a Brain</h2>
-
-      <button
-        onClick={handleClick}
-        disabled={state === "loading"}
-        className={`smart-btn ${state}`}
-      >
-        <span className="btn-icon">
-          {state === "loading" && <span className="spinner" />}
-          {state === "success" && "✓"}
-          {state === "error" && "!"}
-          {state === "idle" && "→"}
-        </span>
-
-        <span>{label}</span>
-      </button>
-
-      <p className="motion-note">
-        180ms hover • 420ms loading transition • Success holds for 1.8s • Error
-        uses color + shake (disabled under reduced motion).
+    <section className="motion-demo">
+      <p className="motion-demo-eyebrow">
+        Week 6 · FE-AA1
       </p>
+
+      <h2 className="motion-demo-title">
+        Buttons with a Brain
+      </h2>
+
+      <p className="motion-demo-description">
+        A state-aware button system used in Glowi. Use the controls
+        below to trigger success and error states intentionally.
+      </p>
+
+      <div className="motion-demo-preview">
+        <button
+          type="button"
+          disabled={isLoading || state === "success"}
+          className={[
+            "smart-send-button",
+            state === "loading"
+              ? "smart-send-button--loading"
+              : "",
+            state === "success"
+              ? "smart-send-button--success"
+              : "",
+            state === "error"
+              ? "smart-send-button--error"
+              : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-live="polite"
+        >
+          {state === "idle" && (
+            <>
+              <span className="smart-send-label">Send</span>
+              <span
+                className="smart-send-arrow"
+                aria-hidden="true"
+              >
+                →
+              </span>
+            </>
+          )}
+
+          {state === "loading" && (
+            <>
+              <span
+                className="smart-send-spinner"
+                aria-hidden="true"
+              />
+              <span className="smart-send-label">
+                Sending...
+              </span>
+            </>
+          )}
+
+          {state === "success" && (
+            <>
+              <span
+                className="smart-send-check"
+                aria-hidden="true"
+              >
+                ✓
+              </span>
+              <span className="smart-send-label">
+                Sent
+              </span>
+            </>
+          )}
+
+          {state === "error" && (
+            <>
+              <span
+                className="smart-send-error-icon"
+                aria-hidden="true"
+              >
+                !
+              </span>
+              <span className="smart-send-label">
+                Try again
+              </span>
+            </>
+          )}
+        </button>
+      </div>
+
+      <div className="motion-demo-controls">
+        <button
+          type="button"
+          onClick={() => runDemo("success")}
+          disabled={isLoading}
+          className="motion-demo-control"
+        >
+          Test success
+        </button>
+
+        <button
+          type="button"
+          onClick={() => runDemo("error")}
+          disabled={isLoading}
+          className="motion-demo-control"
+        >
+          Test error
+        </button>
+      </div>
+
+      <div className="motion-demo-notes">
+        <h3>Motion notes</h3>
+
+        <p>
+          Hover and press interactions use 180ms transitions so
+          feedback feels immediate. Loading, success, and error
+          feedback use 220–320ms motion so state changes remain
+          noticeable without slowing the workflow.
+        </p>
+
+        <p>
+          Motion relies primarily on transform and opacity.
+          Reduced-motion preferences remove non-essential motion
+          while preserving text, color, and state feedback.
+        </p>
+      </div>
     </section>
   );
 }
